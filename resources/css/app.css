@@ -143,3 +143,56 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Sonner Notification Ruvar Luxury Brand Styling */
+[data-sonner-toaster] {
+    --normal-bg: #ffffff;
+    --normal-text: #0b1a30;
+    --normal-border: #e2e8f0;
+}
+
+.dark [data-sonner-toaster] {
+    --normal-bg: #0d1627;
+    --normal-text: #f8fafc;
+    --normal-border: rgba(255, 255, 255, 0.1);
+}
+
+[data-sonner-toast] {
+    font-family: var(--font-sans) !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+    top: 50% !important;
+    right: 12px !important;
+    transform: translateY(-50%) !important;
+    left: auto !important;
+    border-radius: 9999px !important;
+    border: 1px solid #e2e8f0 !important;
+    background-color: #ffffff !important;
+    color: #64748b !important;
+    width: 22px !important;
+    height: 22px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.dark [data-sonner-toast] [data-close-button] {
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background-color: #0d1627 !important;
+    color: #94a3b8 !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+    background-color: #0b1a30 !important;
+    color: #ffffff !important;
+    border-color: #0b1a30 !important;
+}
+
+.dark [data-sonner-toast] [data-close-button]:hover {
+    background-color: #ffffff !important;
+    color: #0b1a30 !important;
+    border-color: #ffffff !important;
+}

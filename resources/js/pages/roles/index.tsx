@@ -22,6 +22,7 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { RoleBadge } from '@/components/role-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -152,6 +153,7 @@ export default function RolesIndex({ roles, modules }: Props) {
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsSaving(false);
+                    toast.success('¡Permisos actualizados y guardados exitosamente!');
                     setSaveSuccessMessage('¡Permisos actualizados y guardados exitosamente!');
                     setTimeout(() => setSaveSuccessMessage(null), 4000);
                 },
