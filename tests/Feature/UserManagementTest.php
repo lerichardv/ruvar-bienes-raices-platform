@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -36,6 +37,7 @@ class UserManagementTest extends TestCase
             'name' => 'Nuevo Agente',
             'email' => 'nuevo.agente@ruvar.com',
             'password' => 'secret1234',
+            'password_confirmation' => 'secret1234',
             'role_id' => $agenteRole->id,
         ]);
 
@@ -43,6 +45,25 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'nuevo.agente@ruvar.com',
             'role_id' => $agenteRole->id,
+        ]);
+    }
+
+    public function test_user_creation_fails_when_password_confirmation_does_not_match(): void
+    {
+        $admin = User::where('email', 'ricardo.valladares.triminio@gmail.com')->first();
+        $agenteRole = Role::where('slug', 'agente')->first();
+
+        $response = $this->actingAs($admin)->post(route('users.store'), [
+            'name' => 'Agente Invalido',
+            'email' => 'invalido@ruvar.com',
+            'password' => 'secret1234',
+            'password_confirmation' => 'diferente999',
+            'role_id' => $agenteRole->id,
+        ]);
+
+        $response->assertSessionHasErrors(['password']);
+        $this->assertDatabaseMissing('users', [
+            'email' => 'invalido@ruvar.com',
         ]);
     }
 
@@ -64,6 +85,25 @@ class UserManagementTest extends TestCase
             'name' => 'Carlos Ramírez Modificado',
             'role_id' => $editorRole->id,
         ]);
+    }
+
+    public function test_user_password_can_be_updated_with_confirmation(): void
+    {
+        $admin = User::where('email', 'ricardo.valladares.triminio@gmail.com')->first();
+        $targetUser = User::where('email', 'carlos.ramirez@ruvar.com')->first();
+        $agenteRole = Role::where('slug', 'agente')->first();
+
+        $response = $this->actingAs($admin)->put(route('users.update', $targetUser), [
+            'name' => $targetUser->name,
+            'email' => $targetUser->email,
+            'role_id' => $agenteRole->id,
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+        $targetUser->refresh();
+        $this->assertTrue(Hash::check('newpassword123', $targetUser->password));
     }
 
     public function test_authenticated_user_cannot_delete_themselves(): void

@@ -1,16 +1,11 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     AlertTriangle,
-    Eye,
-    KeyRound,
     Pencil,
-    Plus,
     Search,
     Shield,
     Trash2,
-    UserCheck,
     UserPlus,
-    Users,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -22,35 +17,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
-} from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
 import { dashboard } from '@/routes';
-
-interface RoleOption {
-    id: number;
-    name: string;
-    slug: string;
-}
-
-interface UserItem {
-    id: number;
-    name: string;
-    email: string;
-    role_id: number | null;
-    role_name: string;
-    role_slug: string;
-    created_at: string;
-    is_current_user: boolean;
-}
+import type { RoleOption, UserItem } from './types';
+import { UserSheet } from './user-sheet';
 
 interface Props {
     users: UserItem[];
@@ -74,57 +44,14 @@ export default function UsersIndex({ users, roles, filters, currentUserId }: Pro
     const [userToDelete, setUserToDelete] = useState<UserItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Form handling
-    const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
-        name: '',
-        email: '',
-        role_id: roles[0]?.id ? String(roles[0].id) : '',
-        password: '',
-    });
-
     const openCreateSheet = () => {
-        clearErrors();
-        reset();
-        setData({
-            name: '',
-            email: '',
-            role_id: roles[0]?.id ? String(roles[0].id) : '',
-            password: '',
-        });
         setEditingUser(null);
         setIsSheetOpen(true);
     };
 
     const openEditSheet = (user: UserItem) => {
-        clearErrors();
-        setData({
-            name: user.name,
-            email: user.email,
-            role_id: user.role_id ? String(user.role_id) : (roles[0]?.id ? String(roles[0].id) : ''),
-            password: '',
-        });
         setEditingUser(user);
         setIsSheetOpen(true);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (editingUser) {
-            put(`/usuarios/${editingUser.id}`, {
-                onSuccess: () => {
-                    setIsSheetOpen(false);
-                    reset();
-                },
-            });
-        } else {
-            post('/usuarios', {
-                onSuccess: () => {
-                    setIsSheetOpen(false);
-                    reset();
-                },
-            });
-        }
     };
 
     const confirmDelete = () => {
@@ -181,7 +108,7 @@ export default function UsersIndex({ users, roles, filters, currentUserId }: Pro
                     <Button
                         type="button"
                         onClick={openCreateSheet}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0b1a30] px-5 py-2.5 text-xs font-bold tracking-wide text-white shadow-xs transition-all hover:bg-[#15233c] hover:shadow"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0b1a30] px-5 py-2.5 text-xs font-bold tracking-wide text-white shadow-xs transition-all hover:bg-[#15233c] hover:shadow cursor-pointer"
                     >
                         <UserPlus className="size-4 stroke-[2.5]" />
                         <span>+ Nuevo Usuario</span>
@@ -316,7 +243,7 @@ export default function UsersIndex({ users, roles, filters, currentUserId }: Pro
                                                         <button
                                                             type="button"
                                                             onClick={() => openEditSheet(u)}
-                                                            className="rounded-lg p-1.5 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                                            className="rounded-lg p-1.5 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer"
                                                             title="Editar usuario"
                                                         >
                                                             <Pencil className="size-4" />
@@ -336,7 +263,7 @@ export default function UsersIndex({ users, roles, filters, currentUserId }: Pro
                                                             <button
                                                                 type="button"
                                                                 onClick={() => setUserToDelete(u)}
-                                                                className="rounded-lg p-1.5 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                                                                className="rounded-lg p-1.5 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
                                                                 title="Eliminar usuario"
                                                             >
                                                                 <Trash2 className="size-4" />
@@ -354,133 +281,13 @@ export default function UsersIndex({ users, roles, filters, currentUserId }: Pro
                 </div>
             </div>
 
-            {/* shadcn Sheet para Crear / Editar Usuario */}
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetContent side="right" className="w-full sm:max-w-md p-6 bg-white dark:bg-[#0d1627] flex flex-col justify-between">
-                    <div>
-                        <SheetHeader className="text-left pb-4 border-b border-slate-100 dark:border-white/10">
-                            <SheetTitle className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                                {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
-                            </SheetTitle>
-                            <SheetDescription className="text-xs text-slate-500 dark:text-slate-400">
-                                {editingUser
-                                    ? `Actualiza los datos y el rol de ${editingUser.name}.`
-                                    : 'Completa los campos para crear una nueva cuenta de acceso.'}
-                            </SheetDescription>
-                        </SheetHeader>
-
-                        <form id="user-form" onSubmit={handleSubmit} className="space-y-4 pt-6">
-                            {/* Nombre */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="name" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                    Nombre Completo *
-                                </Label>
-                                <Input
-                                    id="name"
-                                    type="text"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    placeholder="Ej. Roberto Gómez"
-                                    required
-                                    className="rounded-xl border-slate-200 text-xs py-2 dark:border-slate-700"
-                                />
-                                {errors.name && (
-                                    <p className="text-[11px] text-rose-600">{errors.name}</p>
-                                )}
-                            </div>
-
-                            {/* Correo Electrónico */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                    Correo Electrónico *
-                                </Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    value={data.email}
-                                    onChange={(e) => setData('email', e.target.value)}
-                                    placeholder="correo@ruvar.com"
-                                    required
-                                    className="rounded-xl border-slate-200 text-xs py-2 dark:border-slate-700"
-                                />
-                                {errors.email && (
-                                    <p className="text-[11px] text-rose-600">{errors.email}</p>
-                                )}
-                            </div>
-
-                            {/* Rol */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="role_id" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                    Rol Asignado *
-                                </Label>
-                                <select
-                                    id="role_id"
-                                    value={data.role_id}
-                                    onChange={(e) => setData('role_id', e.target.value)}
-                                    required
-                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                >
-                                    {roles.map((r) => (
-                                        <option key={r.id} value={String(r.id)}>
-                                            {r.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.role_id && (
-                                    <p className="text-[11px] text-rose-600">{errors.role_id}</p>
-                                )}
-                            </div>
-
-                            {/* Contraseña */}
-                            <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                    <Label htmlFor="password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                        Contraseña {editingUser ? '(Opcional)' : '*'}
-                                    </Label>
-                                    {editingUser && (
-                                        <span className="text-[10px] text-slate-400">
-                                            Dejar en blanco para no modificar
-                                        </span>
-                                    )}
-                                </div>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    value={data.password}
-                                    onChange={(e) => setData('password', e.target.value)}
-                                    placeholder="••••••••"
-                                    required={!editingUser}
-                                    minLength={8}
-                                    className="rounded-xl border-slate-200 text-xs py-2 dark:border-slate-700"
-                                />
-                                {errors.password && (
-                                    <p className="text-[11px] text-rose-600">{errors.password}</p>
-                                )}
-                            </div>
-                        </form>
-                    </div>
-
-                    <SheetFooter className="border-t border-slate-100 pt-4 dark:border-white/10 flex flex-row gap-2 justify-end">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsSheetOpen(false)}
-                            className="rounded-xl text-xs py-2 border-slate-200"
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="submit"
-                            form="user-form"
-                            disabled={processing}
-                            className="rounded-xl bg-[#0b1a30] text-xs font-bold text-white hover:bg-[#15233c] py-2 px-5"
-                        >
-                            {processing && <Spinner className="mr-2" />}
-                            {editingUser ? 'Actualizar Usuario' : 'Guardar Usuario'}
-                        </Button>
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
+            {/* Separated and wider Sheet Component for Create / Edit */}
+            <UserSheet
+                isOpen={isSheetOpen}
+                onOpenChange={setIsSheetOpen}
+                user={editingUser}
+                roles={roles}
+            />
 
             {/* Prompt de Confirmación para Eliminar Usuario */}
             <Dialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
