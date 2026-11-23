@@ -1,0 +1,131 @@
+import { Form, Head } from '@inertiajs/react';
+import InputError from '@/components/input-error';
+import PasswordInput from '@/components/password-input';
+import TextLink from '@/components/text-link';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { store } from '@/routes/login';
+import { request } from '@/routes/password';
+import PasskeyVerify from '@/components/passkey-verify';
+
+type Props = {
+    status?: string;
+    canResetPassword: boolean;
+};
+
+export default function Login({ status, canResetPassword }: Props) {
+    return (
+        <>
+            <Head title="Iniciar Sesión - Ruvar Bienes Raíces" />
+
+            <PasskeyVerify />
+
+            <Form
+                {...(typeof store?.form === 'function' ? store.form() : { action: store.url(), method: 'post' })}
+                resetOnSuccess={['password']}
+                className="flex flex-col gap-5"
+            >
+                {({ processing, errors }) => (
+                    <>
+                        <div className="grid gap-4">
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                    Correo Electrónico
+                                </Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    name="email"
+                                    defaultValue="ricardo.valladares.triminio@gmail.com"
+                                    required
+                                    autoFocus
+                                    tabIndex={1}
+                                    autoComplete="email"
+                                    placeholder="ricardo.valladares.triminio@gmail.com"
+                                    className="rounded-xl border-slate-200 text-xs py-2 dark:border-slate-700"
+                                />
+                                <InputError message={errors.email} />
+                            </div>
+
+                            <div className="grid gap-1.5">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="password" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                        Contraseña
+                                    </Label>
+                                    {canResetPassword && (
+                                        <TextLink
+                                            href={request()}
+                                            className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400"
+                                            tabIndex={5}
+                                        >
+                                            ¿Olvidó su contraseña?
+                                        </TextLink>
+                                    )}
+                                </div>
+                                <PasswordInput
+                                    id="password"
+                                    name="password"
+                                    defaultValue="12345678"
+                                    required
+                                    tabIndex={2}
+                                    autoComplete="current-password"
+                                    placeholder="••••••••"
+                                    className="rounded-xl border-slate-200 text-xs py-2 dark:border-slate-700"
+                                />
+                                <InputError message={errors.password} />
+                            </div>
+
+                            <div className="flex items-center space-x-2 pt-1">
+                                <Checkbox
+                                    id="remember"
+                                    name="remember"
+                                    defaultChecked
+                                    tabIndex={3}
+                                />
+                                <Label htmlFor="remember" className="text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                                    Recordar sesión
+                                </Label>
+                            </div>
+
+                            <Button
+                                type="submit"
+                                className="mt-2 w-full rounded-xl bg-[#0b1a30] py-2.5 text-xs font-bold tracking-wide text-white transition-all hover:bg-[#15233c] hover:shadow-sm"
+                                tabIndex={4}
+                                disabled={processing}
+                                data-test="login-button"
+                            >
+                                {processing && <Spinner />}
+                                Iniciar Sesión en el Panel
+                            </Button>
+                        </div>
+
+                        {/* Credential hint helper */}
+                        <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-center dark:border-white/5 dark:bg-slate-800/40">
+                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+                                Credenciales de acceso de prueba:
+                            </span>
+                            <div className="text-[11px] font-mono text-slate-700 dark:text-slate-300 select-all">
+                                <div>ricardo.valladares.triminio@gmail.com</div>
+                                <div>Contraseña: 12345678</div>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </Form>
+
+            {status && (
+                <div className="mb-4 text-center text-xs font-medium text-emerald-600">
+                    {status}
+                </div>
+            )}
+        </>
+    );
+}
+
+Login.layout = {
+    title: 'Acceso Administrativo',
+    description: 'Ingrese sus credenciales para acceder a la gestión de bienes raíces',
+};
