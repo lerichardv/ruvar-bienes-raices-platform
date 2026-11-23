@@ -21,7 +21,11 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Iniciar Sesión - Ruvar Bienes Raíces" />
 
-            <PasskeyVerify />
+            <PasskeyVerify
+                label="Iniciar sesión con una llave de acceso"
+                loadingLabel="Autenticando llave de acceso..."
+                separator="O continúa con tu correo"
+            />
 
             <Form
                 {...(typeof store?.form === 'function' ? store.form() : { action: store.url(), method: 'post' })}
@@ -39,12 +43,11 @@ export default function Login({ status, canResetPassword }: Props) {
                                     id="email"
                                     type="email"
                                     name="email"
-                                    defaultValue="ricardo.valladares.triminio@gmail.com"
                                     required
                                     autoFocus
                                     tabIndex={1}
                                     autoComplete="email"
-                                    placeholder="ricardo.valladares.triminio@gmail.com"
+                                    placeholder="correo@ruvar.com"
                                     className="rounded-xl border-slate-200 text-xs py-2 dark:border-slate-700"
                                 />
                                 <InputError message={errors.email} />
@@ -68,7 +71,6 @@ export default function Login({ status, canResetPassword }: Props) {
                                 <PasswordInput
                                     id="password"
                                     name="password"
-                                    defaultValue="12345678"
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
@@ -82,7 +84,6 @@ export default function Login({ status, canResetPassword }: Props) {
                                 <Checkbox
                                     id="remember"
                                     name="remember"
-                                    defaultChecked
                                     tabIndex={3}
                                 />
                                 <Label htmlFor="remember" className="text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
@@ -92,25 +93,14 @@ export default function Login({ status, canResetPassword }: Props) {
 
                             <Button
                                 type="submit"
-                                className="mt-2 w-full rounded-xl bg-[#0b1a30] py-2.5 text-xs font-bold tracking-wide text-white transition-all hover:bg-[#15233c] hover:shadow-sm"
+                                className="mt-2 w-full rounded-xl bg-[#0b1a30] py-2.5 text-xs font-bold tracking-wide text-white transition-all hover:bg-[#15233c] hover:shadow-sm cursor-pointer"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
                             >
-                                {processing && <Spinner />}
+                                {processing && <Spinner className="mr-2" />}
                                 Iniciar Sesión en el Panel
                             </Button>
-                        </div>
-
-                        {/* Credential hint helper */}
-                        <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-center dark:border-white/5 dark:bg-slate-800/40">
-                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
-                                Credenciales de acceso de prueba:
-                            </span>
-                            <div className="text-[11px] font-mono text-slate-700 dark:text-slate-300 select-all">
-                                <div>ricardo.valladares.triminio@gmail.com</div>
-                                <div>Contraseña: 12345678</div>
-                            </div>
                         </div>
                     </>
                 )}
