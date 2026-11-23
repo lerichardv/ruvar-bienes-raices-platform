@@ -1,5 +1,4 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bell, Search, Settings } from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
@@ -36,39 +35,10 @@ export function AppSidebarHeader({
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4">
-                {/* Search Bar */}
-                <div className="relative hidden md:block w-64 lg:w-80">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Buscar propiedades, clientes..."
-                        className="w-full rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-4 text-xs text-slate-800 placeholder-slate-400 transition-colors focus:border-slate-400 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200"
-                    />
-                </div>
-
-                {/* Notifications Bell */}
-                <button
-                    type="button"
-                    className="relative rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
-                    aria-label="Notificaciones"
-                >
-                    <Bell className="size-4" />
-                    <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
-                </button>
-
-                {/* Settings Gear */}
-                <Link
-                    href={editProfile()}
-                    className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
-                    aria-label="Configuración"
-                >
-                    <Settings className="size-4" />
-                </Link>
-
                 {/* User quick badge */}
                 <Link
                     href={editProfile()}
-                    className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-1 pr-3 transition-colors hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/80"
+                    className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-1 pr-3 transition-colors hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800/80 cursor-pointer"
                 >
                     <span className="flex size-7 items-center justify-center rounded-full bg-[#0b1a30] text-xs font-bold text-white">
                         {initials}
