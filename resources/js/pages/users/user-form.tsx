@@ -1,5 +1,6 @@
 import { CheckCircle2, Lock, Mail, Shield, User, XCircle } from 'lucide-react';
 import React from 'react';
+import { RoleBadge } from '@/components/role-badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { RoleOption, UserFormData } from './types';
@@ -88,13 +89,25 @@ export function UserForm({
 
                 {/* Rol Asignado (spanning 2 columns) */}
                 <div className="space-y-1.5 md:col-span-2">
-                    <Label
-                        htmlFor="user-role"
-                        className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300"
-                    >
-                        <Shield className="size-3.5 text-slate-400" />
-                        <span>Rol Asignado *</span>
-                    </Label>
+                    <div className="flex items-center justify-between">
+                        <Label
+                            htmlFor="user-role"
+                            className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                        >
+                            <Shield className="size-3.5 text-slate-400" />
+                            <span>Rol Asignado *</span>
+                        </Label>
+                        {(() => {
+                            const selectedRoleObj = roles.find((r) => String(r.id) === String(data.role_id));
+                            return selectedRoleObj ? (
+                                <RoleBadge
+                                    name={selectedRoleObj.name}
+                                    color={selectedRoleObj.color}
+                                    size="sm"
+                                />
+                            ) : null;
+                        })()}
+                    </div>
                     <div className="relative">
                         <select
                             id="user-role"

@@ -72,6 +72,7 @@ class RoleController extends Controller
                     'name' => $role->name,
                     'slug' => $role->slug,
                     'description' => $role->description,
+                    'color' => $role->color ?? '#8b5cf6',
                     'users_count' => $role->users_count,
                     'is_system_admin' => in_array($role->slug, ['admin', 'administrador'], true),
                     'module_permissions' => $modulePermissions,
@@ -93,6 +94,7 @@ class RoleController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:roles,slug'],
             'description' => ['nullable', 'string', 'max:500'],
+            'color' => ['nullable', 'string', 'max:50'],
             'permissions' => ['required', 'array'],
         ]);
 
@@ -112,6 +114,7 @@ class RoleController extends Controller
             'name' => $validated['name'],
             'slug' => $slug,
             'description' => $validated['description'] ?? null,
+            'color' => $validated['color'] ?? '#8b5cf6',
         ]);
 
         $this->syncRolePermissions($role, $validated['permissions']);
@@ -128,6 +131,7 @@ class RoleController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('roles', 'slug')->ignore($role->id)],
             'description' => ['nullable', 'string', 'max:500'],
+            'color' => ['nullable', 'string', 'max:50'],
             'permissions' => ['required', 'array'],
         ]);
 
@@ -138,6 +142,9 @@ class RoleController extends Controller
         }
 
         $role->description = $validated['description'] ?? null;
+        if (! empty($validated['color'])) {
+            $role->color = $validated['color'];
+        }
         $role->save();
 
         $this->syncRolePermissions($role, $validated['permissions']);

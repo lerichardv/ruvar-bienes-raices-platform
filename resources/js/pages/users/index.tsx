@@ -8,6 +8,7 @@ import {
     UserPlus,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { RoleBadge } from '@/components/role-badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -207,20 +208,10 @@ export default function UsersIndex({ users, roles, filters, currentUserId }: Pro
 
                                                 {/* Rol badge */}
                                                 <td className="px-4 py-4">
-                                                    <span
-                                                        className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold ${
-                                                            u.role_slug === 'admin'
-                                                                ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
-                                                                : u.role_slug === 'agente'
-                                                                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
-                                                                  : u.role_slug === 'editor'
-                                                                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
-                                                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                                                        }`}
-                                                    >
-                                                        <Shield className="size-3" />
-                                                        <span>{u.role_name}</span>
-                                                    </span>
+                                                    <RoleBadge
+                                                        name={u.role_name}
+                                                        color={u.role_color}
+                                                    />
                                                 </td>
 
                                                 {/* Fecha */}

@@ -51,32 +51,48 @@ class RoleAndPermissionSeeder extends Seeder
             [
                 'name' => 'Administrador',
                 'description' => 'Acceso total y administración integral de todos los módulos del sistema inmobiliario.',
+                'color' => '#8b5cf6',
             ]
         );
+        if (empty($adminRole->color) || $adminRole->color === '#7c3aed') {
+            $adminRole->update(['color' => '#8b5cf6']);
+        }
 
         $agenteRole = Role::firstOrCreate(
             ['slug' => 'agente'],
             [
                 'name' => 'Agente Inmobiliario',
                 'description' => 'Gestión completa de cartera de propiedades y proyectos. Visualización de artículos.',
+                'color' => '#2563eb',
             ]
         );
+        if (empty($agenteRole->color) || $agenteRole->color === '#7c3aed') {
+            $agenteRole->update(['color' => '#2563eb']);
+        }
 
         $editorRole = Role::firstOrCreate(
             ['slug' => 'editor'],
             [
                 'name' => 'Editor de Contenidos',
                 'description' => 'Redacción y gestión de artículos y novedades del portal. Visualización de propiedades.',
+                'color' => '#d97706',
             ]
         );
+        if (empty($editorRole->color) || $editorRole->color === '#7c3aed') {
+            $editorRole->update(['color' => '#d97706']);
+        }
 
         $asesorRole = Role::firstOrCreate(
             ['slug' => 'asesor'],
             [
                 'name' => 'Asesor de Ventas',
                 'description' => 'Consulta y visualización del catálogo de propiedades y proyectos para atención a clientes.',
+                'color' => '#475569',
             ]
         );
+        if (empty($asesorRole->color) || $asesorRole->color === '#7c3aed') {
+            $asesorRole->update(['color' => '#475569']);
+        }
 
         // 3. Assign permissions to roles
         // Admin gets all permissions

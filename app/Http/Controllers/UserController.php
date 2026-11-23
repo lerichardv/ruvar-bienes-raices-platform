@@ -44,12 +44,13 @@ class UserController extends Controller
                     'role_id' => $user->role_id,
                     'role_name' => $user->role?->name ?? 'Sin Asignar',
                     'role_slug' => $user->role?->slug ?? 'sin-asignar',
+                    'role_color' => $user->role?->color ?? '#64748b',
                     'created_at' => $user->created_at?->format('d/m/Y') ?? 'Reciente',
                     'is_current_user' => $user->id === auth()->id(),
                 ];
             });
 
-        $roles = Role::select('id', 'name', 'slug')->get();
+        $roles = Role::select('id', 'name', 'slug', 'color')->get();
 
         return Inertia::render('users/index', [
             'users' => $users,

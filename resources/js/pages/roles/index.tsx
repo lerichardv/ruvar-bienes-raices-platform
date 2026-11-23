@@ -22,6 +22,7 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { RoleBadge } from '@/components/role-badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -144,6 +145,7 @@ export default function RolesIndex({ roles, modules }: Props) {
                 name: currentRole.name,
                 slug: currentRole.slug,
                 description: currentRole.description,
+                color: currentRole.color,
                 permissions: permissionsState,
             },
             {
@@ -270,21 +272,24 @@ export default function RolesIndex({ roles, modules }: Props) {
                                 className="inline-flex items-center gap-3 rounded-xl border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-50 hover:text-slate-900 focus:outline-hidden dark:border-white/10 dark:bg-[#0d1627] dark:text-slate-100 dark:hover:bg-slate-800 cursor-pointer min-w-[260px] justify-between"
                             >
                                 <div className="flex items-center gap-2.5">
-                                    <div className="flex size-6 items-center justify-center rounded-lg bg-slate-100 text-[#0b1a30] dark:bg-slate-800 dark:text-white">
+                                    <div
+                                        className="flex size-6 items-center justify-center rounded-lg shadow-2xs transition-colors"
+                                        style={{
+                                            backgroundColor: `color-mix(in srgb, ${currentRole.color || '#8b5cf6'} 15%, transparent)`,
+                                            color: currentRole.color || '#8b5cf6',
+                                        }}
+                                    >
                                         <Shield className="size-3.5" />
                                     </div>
                                     <span className="text-xs font-extrabold text-slate-900 dark:text-white">
                                         {currentRole.name}
                                     </span>
-                                    {currentRole.is_system_admin ? (
-                                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] font-extrabold text-purple-700 uppercase dark:bg-purple-950/60 dark:text-purple-300">
-                                            Sistema
-                                        </span>
-                                    ) : (
-                                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                                            {currentRole.users_count} {currentRole.users_count === 1 ? 'usr' : 'usrs'}
-                                        </span>
-                                    )}
+                                    <RoleBadge
+                                        name={currentRole.is_system_admin ? 'Sistema' : `${currentRole.users_count} ${currentRole.users_count === 1 ? 'usr' : 'usrs'}`}
+                                        color={currentRole.color}
+                                        size="sm"
+                                        icon={null}
+                                    />
                                 </div>
                                 <ChevronDown className="size-4 text-slate-400 transition-transform duration-200" />
                             </Button>
@@ -312,11 +317,15 @@ export default function RolesIndex({ roles, modules }: Props) {
                                         }`}
                                     >
                                         <div className="flex items-center gap-2.5">
-                                            <Shield
-                                                className={`size-4 ${
-                                                    isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'
-                                                }`}
-                                            />
+                                            <div
+                                                className="flex size-6 items-center justify-center rounded-lg shrink-0 transition-colors"
+                                                style={{
+                                                    backgroundColor: `color-mix(in srgb, ${role.color || '#8b5cf6'} 15%, transparent)`,
+                                                    color: role.color || '#8b5cf6',
+                                                }}
+                                            >
+                                                <Shield className="size-3.5" />
+                                            </div>
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-bold text-slate-900 dark:text-white">
                                                     {role.name}
@@ -328,16 +337,13 @@ export default function RolesIndex({ roles, modules }: Props) {
                                         </div>
 
                                         <div className="flex items-center gap-2">
-                                            {role.is_system_admin ? (
-                                                <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] font-extrabold text-purple-700 uppercase dark:bg-purple-950/60 dark:text-purple-300">
-                                                    Sistema
-                                                </span>
-                                            ) : (
-                                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                                                    {role.users_count} {role.users_count === 1 ? 'usr' : 'usrs'}
-                                                </span>
-                                            )}
-                                            {isSelected && <Check className="size-4 text-blue-600 dark:text-blue-400" />}
+                                            <RoleBadge
+                                                name={role.is_system_admin ? 'Sistema' : `${role.users_count} ${role.users_count === 1 ? 'usr' : 'usrs'}`}
+                                                color={role.color}
+                                                size="sm"
+                                                icon={null}
+                                            />
+                                            {isSelected && <Check className="size-4 text-slate-900 dark:text-white stroke-[2.5]" />}
                                         </div>
                                     </DropdownMenuItem>
                                 );
@@ -370,11 +376,11 @@ export default function RolesIndex({ roles, modules }: Props) {
                                     <span className="font-mono text-xs text-slate-400">
                                         slug: {currentRole.slug}
                                     </span>
-                                    {currentRole.is_system_admin && (
-                                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">
-                                            Administrador Principal
-                                        </span>
-                                    )}
+                                    <RoleBadge
+                                        name={currentRole.is_system_admin ? 'Administrador Principal' : currentRole.name}
+                                        color={currentRole.color}
+                                        size="sm"
+                                    />
                                 </div>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {currentRole.description || 'Sin descripción asignada para este rol.'}

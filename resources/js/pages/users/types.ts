@@ -2,6 +2,7 @@ export interface RoleOption {
     id: number;
     name: string;
     slug: string;
+    color?: string;
 }
 
 export interface UserItem {
@@ -11,6 +12,7 @@ export interface UserItem {
     role_id: number | null;
     role_name: string;
     role_slug: string;
+    role_color?: string;
     created_at: string;
     is_current_user: boolean;
 }
