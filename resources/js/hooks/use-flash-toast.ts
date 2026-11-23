@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import type { FlashToast } from '@/types/ui';
@@ -13,14 +13,11 @@ interface FlashProps {
 }
 
 export function useFlashToast(): void {
-    const page = usePage<{ flash?: FlashProps }>();
-    const flash = page.props?.flash;
     const lastToastRef = useRef<string | null>(null);
 
-    useEffect(() => {
+    const handleFlash = (flash?: FlashProps | null) => {
         if (!flash) return;
 
-        // Create a unique fingerprint for current flash messages
         const currentKey = [
             flash.success,
             flash.error,
@@ -49,18 +46,45 @@ export function useFlashToast(): void {
         } else if (flash.status) {
             toast.info(flash.status);
         }
-    }, [flash]);
+    };
 
     useEffect(() => {
-        return router.on('flash', (event) => {
+        // 1. Check if router already has page props on mount
+        const initialPage = (
+            router as unknown as {
+                page?: { props?: { flash?: FlashProps } };
+            }
+        ).page;
+        if (initialPage?.props?.flash) {
+            handleFlash(initialPage.props.flash);
+        }
+
+        // 2. Listen to navigate events (fired on initial, visit, history)
+        const unregisterNavigate = router.on('navigate', (event) => {
+            const page = (
+                event.detail as {
+                    page?: { props?: { flash?: FlashProps } };
+                }
+            )?.page;
+            if (page?.props?.flash) {
+                handleFlash(page.props.flash);
+            }
+        });
+
+        // 3. Listen to flash events
+        const unregisterFlash = router.on('flash', (event) => {
             const flashDetail = (event as CustomEvent).detail?.flash;
             const data = flashDetail?.toast as FlashToast | undefined;
-
-            if (!data) {
-                return;
+            if (data && data.type && data.message) {
+                toast[data.type](data.message);
+            } else if (flashDetail) {
+                handleFlash(flashDetail as FlashProps);
             }
-
-            toast[data.type](data.message);
         });
+
+        return () => {
+            unregisterNavigate();
+            unregisterFlash();
+        };
     }, []);
 }
