@@ -57,11 +57,11 @@ export default function TwoFactorRecoveryCodes({
             <CardHeader>
                 <CardTitle className="flex gap-3">
                     <LockKeyhole className="size-4" aria-hidden="true" />
-                    2FA recovery codes
+                    Códigos de recuperación 2FA
                 </CardTitle>
                 <CardDescription>
-                    Recovery codes let you regain access if you lose your 2FA
-                    device. Store them in a secure password manager.
+                    Los códigos de recuperación te permiten acceder a tu cuenta si pierdes tu dispositivo 2FA.
+                    Guárdalos en un lugar seguro o en un gestor de contraseñas.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -73,10 +73,10 @@ export default function TwoFactorRecoveryCodes({
                         aria-controls="recovery-codes-section"
                     >
                         <RecoveryCodeIconComponent
-                            className="size-4"
+                            className="size-4 mr-1.5"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Hide' : 'View'} recovery codes
+                        {codesAreVisible ? 'Ocultar' : 'Ver'} códigos de recuperación
                     </Button>
 
                     {canRegenerateCodes && (
@@ -92,71 +92,29 @@ export default function TwoFactorRecoveryCodes({
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
                                 >
-                                    <RefreshCw /> Regenerate codes
+                                    <RefreshCw className="mr-1.5 size-3.5" /> Regenerar códigos
                                 </Button>
                             )}
                         </Form>
                     )}
                 </div>
+
                 <div
                     id="recovery-codes-section"
-                    className={`relative overflow-hidden transition-all duration-300 ${codesAreVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
-                    aria-hidden={!codesAreVisible}
+                    ref={codesSectionRef}
+                    className={`mt-4 ${codesAreVisible ? 'block' : 'hidden'}`}
                 >
-                    <div className="mt-3 space-y-3">
-                        {errors?.length ? (
-                            <AlertError errors={errors} />
-                        ) : (
-                            <>
-                                <div
-                                    ref={codesSectionRef}
-                                    className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
-                                    role="list"
-                                    aria-label="Recovery codes"
-                                >
-                                    {recoveryCodesList.length ? (
-                                        recoveryCodesList.map((code, index) => (
-                                            <div
-                                                key={index}
-                                                role="listitem"
-                                                className="select-text"
-                                            >
-                                                {code}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div
-                                            className="space-y-2"
-                                            aria-label="Loading recovery codes"
-                                        >
-                                            {Array.from(
-                                                { length: 8 },
-                                                (_, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="h-4 animate-pulse rounded bg-muted-foreground/20"
-                                                        aria-hidden="true"
-                                                    />
-                                                ),
-                                            )}
-                                        </div>
-                                    )}
+                    {errors?.length ? (
+                        <AlertError errors={errors} />
+                    ) : (
+                        <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-4 font-mono text-xs">
+                            {recoveryCodesList.map((code) => (
+                                <div key={code} className="select-all">
+                                    {code}
                                 </div>
-
-                                <div className="text-xs text-muted-foreground select-none">
-                                    <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
-                                        <span className="font-bold">
-                                            Regenerate codes
-                                        </span>{' '}
-                                        above.
-                                    </p>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
