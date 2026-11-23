@@ -423,8 +423,8 @@ export default function RolesIndex({ roles, modules }: Props) {
 
                         {/* Banner for System Admin */}
                         {currentRole.is_system_admin && (
-                            <div className="mt-4 flex items-center gap-2 rounded-xl bg-purple-50 p-3 text-xs text-purple-900 dark:bg-purple-950/30 dark:text-purple-200">
-                                <Lock className="size-4 shrink-0 text-purple-700 dark:text-purple-400" />
+                            <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-blue-200/80 bg-blue-50/80 p-3 text-xs text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-200">
+                                <Info className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
                                 <span>
                                     <strong>Rol de Seguridad del Sistema:</strong> Este rol posee control total y permanente en todos los módulos. Los switches permanecen activados para proteger la integridad del sistema.
                                 </span>
