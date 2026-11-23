@@ -8,7 +8,30 @@ import {
 import React from 'react';
 import { useAppearance } from '@/hooks/use-appearance';
 import { useFlashToast } from '@/hooks/use-flash-toast';
-import { Toaster as Sonner, type ToasterProps } from 'sonner';
+import { Toaster as Sonner, toast, type ToasterProps, type ExternalToast } from 'sonner';
+
+/**
+ * Toast service helper for programmatic toast dispatching with brand defaults.
+ */
+export const toastService = {
+    success: (message: string, data?: ExternalToast) => toast.success(message, data),
+    error: (message: string, data?: ExternalToast) => toast.error(message, data),
+    info: (message: string, data?: ExternalToast) => toast.info(message, data),
+    warning: (message: string, data?: ExternalToast) => toast.warning(message, data),
+    loading: (message: string, data?: ExternalToast) => toast.loading(message, data),
+    dismiss: (toastId?: number | string) => toast.dismiss(toastId),
+    custom: toast.custom,
+    promise: toast.promise,
+};
+
+/**
+ * React hook to access the toast notification service.
+ */
+export function useToast() {
+    return {
+        toast: toastService,
+    };
+}
 
 function Toaster({ ...props }: ToasterProps) {
     const { appearance } = useAppearance();
@@ -76,4 +99,4 @@ function Toaster({ ...props }: ToasterProps) {
     );
 }
 
-export { Toaster };
+export { Toaster, Toaster as ToastProvider, toast };
