@@ -13,6 +13,9 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\LogoutResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -23,7 +26,44 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LoginResponse::class, function () {
+            return new class implements LoginResponse
+            {
+                public function toResponse($request)
+                {
+                    return $request->wantsJson() && ! $request->header('X-Inertia')
+                        ? response()->json(['two_factor' => false])
+                        : redirect()->intended(config('fortify.home'))
+                            ->with('success', '¡Bienvenido de nuevo al panel de Ruvar Bienes Raíces!');
+                }
+            };
+        });
+
+        $this->app->singleton(TwoFactorLoginResponse::class, function () {
+            return new class implements TwoFactorLoginResponse
+            {
+                public function toResponse($request)
+                {
+                    return $request->wantsJson() && ! $request->header('X-Inertia')
+                        ? response()->noContent()
+                        : redirect()->intended(config('fortify.home'))
+                            ->with('success', '¡Autenticación de dos factores exitosa!');
+                }
+            };
+        });
+
+        $this->app->singleton(LogoutResponse::class, function () {
+            return new class implements LogoutResponse
+            {
+                public function toResponse($request)
+                {
+                    return $request->wantsJson() && ! $request->header('X-Inertia')
+                        ? response()->noContent()
+                        : redirect('/')
+                            ->with('info', 'Has cerrado sesión exitosamente.');
+                }
+            };
+        });
     }
 
     /**

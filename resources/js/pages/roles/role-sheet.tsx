@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import { Check, Palette } from 'lucide-react';
 import React, { useEffect } from 'react';
+import { toast } from 'sonner';
 import { RoleBadge, ROLE_COLOR_PRESETS } from '@/components/role-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,6 +102,7 @@ export function RoleSheet({
         if (isEditing && role) {
             put(`/roles/${role.id}`, {
                 onSuccess: () => {
+                    toast.success('Rol y datos actualizados exitosamente.');
                     onOpenChange(false);
                     reset();
                     onSuccess?.();
@@ -109,6 +111,7 @@ export function RoleSheet({
         } else {
             post('/roles', {
                 onSuccess: () => {
+                    toast.success('Rol creado exitosamente.');
                     onOpenChange(false);
                     reset();
                     onSuccess?.();

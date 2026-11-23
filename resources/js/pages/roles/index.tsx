@@ -96,43 +96,81 @@ export default function RolesIndex({ roles, modules }: Props) {
         );
     }, [currentRole, permissionsState]);
 
+    // Save single permission change on switch toggle with instant feedback
+    const saveRolePermissions = (
+        updatedPermissions: Record<string, 'none' | 'view' | 'manage'>,
+        moduleName: string,
+        label: string,
+    ) => {
+        setIsSaving(true);
+        router.put(
+            `/roles/${currentRole.id}`,
+            {
+                name: currentRole.name,
+                slug: currentRole.slug,
+                description: currentRole.description,
+                color: currentRole.color,
+                permissions: updatedPermissions,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSaving(false);
+                    toast.success(`Permiso de "${moduleName}" actualizado (${label})`);
+                },
+                onError: () => {
+                    setIsSaving(false);
+                    toast.error(`Error al actualizar el permiso de "${moduleName}"`);
+                },
+            },
+        );
+    };
+
     // Handle toggling the "Ver" switch
     const handleToggleView = (moduleKey: string, checked: boolean) => {
         if (currentRole.is_system_admin) return;
 
-        setPermissionsState((prev) => {
-            const currentLevel = prev[moduleKey] || 'none';
-            let nextLevel: 'none' | 'view' | 'manage';
+        const mod = modules.find((m) => m.key === moduleKey);
+        const moduleName = mod?.name || moduleKey;
 
-            if (checked) {
-                // If checking view, keep manage if it was already manage, else view
-                nextLevel = currentLevel === 'manage' ? 'manage' : 'view';
-            } else {
-                // If unchecking view, manage must also be disabled
-                nextLevel = 'none';
-            }
+        const currentLevel = permissionsState[moduleKey] || 'none';
+        let nextLevel: 'none' | 'view' | 'manage';
 
-            return { ...prev, [moduleKey]: nextLevel };
-        });
+        if (checked) {
+            // If checking view, keep manage if it was already manage, else view
+            nextLevel = currentLevel === 'manage' ? 'manage' : 'view';
+        } else {
+            // If unchecking view, manage must also be disabled
+            nextLevel = 'none';
+        }
+
+        const label = nextLevel === 'manage' ? 'Ver y Gestionar' : nextLevel === 'view' ? 'Solo Ver' : 'Sin Acceso';
+        const updated = { ...permissionsState, [moduleKey]: nextLevel };
+        setPermissionsState(updated);
+        saveRolePermissions(updated, moduleName, label);
     };
 
     // Handle toggling the "Gestionar" switch
     const handleToggleManage = (moduleKey: string, checked: boolean) => {
         if (currentRole.is_system_admin) return;
 
-        setPermissionsState((prev) => {
-            let nextLevel: 'none' | 'view' | 'manage';
+        const mod = modules.find((m) => m.key === moduleKey);
+        const moduleName = mod?.name || moduleKey;
 
-            if (checked) {
-                // Manage automatically implies View
-                nextLevel = 'manage';
-            } else {
-                // Unchecking manage downgrades to View
-                nextLevel = 'view';
-            }
+        let nextLevel: 'none' | 'view' | 'manage';
 
-            return { ...prev, [moduleKey]: nextLevel };
-        });
+        if (checked) {
+            // Manage automatically implies View
+            nextLevel = 'manage';
+        } else {
+            // Unchecking manage downgrades to View
+            nextLevel = 'view';
+        }
+
+        const label = nextLevel === 'manage' ? 'Ver y Gestionar' : 'Solo Ver';
+        const updated = { ...permissionsState, [moduleKey]: nextLevel };
+        setPermissionsState(updated);
+        saveRolePermissions(updated, moduleName, label);
     };
 
     // Save modified permissions to backend
@@ -169,6 +207,7 @@ export default function RolesIndex({ roles, modules }: Props) {
         if (currentRole) {
             setPermissionsState({ ...currentRole.module_permissions });
             setSaveSuccessMessage(null);
+            toast.info('Cambios de permisos descartados.');
         }
     };
 
@@ -177,19 +216,22 @@ export default function RolesIndex({ roles, modules }: Props) {
         if (!roleToDelete) return;
 
         if (roleToDelete.is_system_admin) {
-            alert('El rol del sistema no se puede eliminar.');
+            toast.error('El rol de Administrador principal del sistema no puede ser eliminado.');
             setRoleToDelete(null);
             return;
         }
 
         if (roleToDelete.users_count > 0) {
-            alert('No se puede eliminar un rol con usuarios asignados.');
+            toast.error('No se puede eliminar un rol que tiene usuarios asignados. Reasigne los usuarios primero.');
             setRoleToDelete(null);
             return;
         }
 
         setIsDeleting(true);
         router.delete(`/roles/${roleToDelete.id}`, {
+            onSuccess: () => {
+                toast.success('Rol eliminado exitosamente.');
+            },
             onFinish: () => {
                 setIsDeleting(false);
                 setRoleToDelete(null);

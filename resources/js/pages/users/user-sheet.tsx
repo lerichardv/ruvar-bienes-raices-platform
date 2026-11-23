@@ -1,5 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import React, { useEffect } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -84,6 +85,7 @@ export function UserSheet({
         if (isEditing && user) {
             put(`/usuarios/${user.id}`, {
                 onSuccess: () => {
+                    toast.success('Usuario actualizado exitosamente.');
                     onOpenChange(false);
                     reset();
                     onSuccess?.();
@@ -92,6 +94,7 @@ export function UserSheet({
         } else {
             post('/usuarios', {
                 onSuccess: () => {
+                    toast.success('Usuario creado exitosamente.');
                     onOpenChange(false);
                     reset();
                     onSuccess?.();

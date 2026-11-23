@@ -8,6 +8,7 @@ import {
     UserPlus,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { RoleBadge } from '@/components/role-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -60,13 +61,16 @@ export default function UsersIndex({ users, roles, filters, currentUserId }: Pro
 
         // Extra client-side guard
         if (userToDelete.id === currentUserId || userToDelete.is_current_user) {
-            alert('No puedes eliminar tu propia cuenta de usuario.');
+            toast.error('No puedes eliminar tu propia cuenta de usuario.');
             setUserToDelete(null);
             return;
         }
 
         setIsDeleting(true);
         router.delete(`/usuarios/${userToDelete.id}`, {
+            onSuccess: () => {
+                toast.success('Usuario eliminado exitosamente.');
+            },
             onFinish: () => {
                 setIsDeleting(false);
                 setUserToDelete(null);

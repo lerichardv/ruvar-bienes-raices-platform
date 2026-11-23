@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import type { HTMLAttributes } from 'react';
+import { toast } from 'sonner';
 import type { Appearance } from '@/hooks/use-appearance';
 import { useAppearance } from '@/hooks/use-appearance';
 import { cn } from '@/lib/utils';
@@ -28,7 +29,10 @@ export default function AppearanceToggleTab({
             {tabs.map(({ value, icon: Icon, label }) => (
                 <button
                     key={value}
-                    onClick={() => updateAppearance(value)}
+                    onClick={() => {
+                        updateAppearance(value);
+                        toast.info(`Tema de apariencia: ${label}`);
+                    }}
                     className={cn(
                         'flex items-center rounded-md px-3.5 py-1.5 transition-colors cursor-pointer',
                         appearance === value
