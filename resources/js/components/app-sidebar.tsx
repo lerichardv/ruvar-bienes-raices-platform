@@ -79,36 +79,7 @@ export function AppSidebar() {
                         {!isCollapsed && <span>Resumen</span>}
                     </Link>
 
-                    {/* Propiedades */}
-                    <Link
-                        href={dashboard()}
-                        className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${
-                            url.includes('propiedades')
-                                ? 'border border-slate-700/60 bg-[#131f37] font-medium text-white shadow-sm'
-                                : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                        }`}
-                    >
-                        <Home className="size-4 shrink-0" />
-                        {!isCollapsed && <span>Propiedades</span>}
-                    </Link>
-
-                    {/* Proyectos */}
-                    <button
-                        type="button"
-                        className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
-                    >
-                        <FolderKanban className="size-4 shrink-0 text-slate-400 group-hover:text-white" />
-                        {!isCollapsed && <span>Proyectos</span>}
-                    </button>
-
-                    {/* Artículos */}
-                    <button
-                        type="button"
-                        className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
-                    >
-                        <FileText className="size-4 shrink-0 text-slate-400 group-hover:text-white" />
-                        {!isCollapsed && <span>Artículos</span>}
-                    </button>
+                    {/* Opciones temporalmente ocultas: Propiedades, Proyectos, Artículos */}
 
                     {/* Usuarios (Collapsible group) */}
                     <div className="pt-1">
