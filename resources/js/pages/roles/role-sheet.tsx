@@ -124,7 +124,7 @@ export function RoleSheet({
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetContent
                 side="right"
-                className="w-full sm:max-w-md p-6 bg-white dark:bg-[#0d1627] flex flex-col justify-between overflow-y-auto"
+                className="w-full sm:max-w-lg md:max-w-xl p-6 sm:p-8 bg-white dark:bg-[#0d1627] flex flex-col justify-between overflow-y-auto"
             >
                 <div className="space-y-6">
                     <SheetHeader className="text-left pb-4 border-b border-slate-100 dark:border-white/10">
