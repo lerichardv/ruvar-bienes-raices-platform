@@ -1,11 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     ChevronDown,
-    FileText,
-    FolderKanban,
-    Home,
     LayoutGrid,
-    LogOut,
     ShieldCheck,
     User,
     Users,
@@ -136,36 +132,22 @@ export function AppSidebar() {
                 </nav>
             </SidebarContent>
 
-            {/* Footer: User profile and Logout */}
+            {/* Footer: User profile info */}
             <SidebarFooter className="border-t border-white/5 p-4">
-                <div className="flex flex-col gap-3">
-                    {/* User profile card */}
-                    <div className="flex items-center gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#16233a] text-xs font-bold text-white ring-1 ring-white/10">
-                            {initials}
-                        </div>
-                        {!isCollapsed && (
-                            <div className="flex flex-col truncate leading-tight">
-                                <span className="truncate text-sm font-semibold text-white">
-                                    {user?.name || 'Ricardo Valladares'}
-                                </span>
-                                <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
-                                    {user?.role?.name || 'ADMINISTRADOR'}
-                                </span>
-                            </div>
-                        )}
+                <div className="flex items-center gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#16233a] text-xs font-bold text-white ring-1 ring-white/10">
+                        {initials}
                     </div>
-
-                    {/* Exit button */}
-                    <Link
-                        href={logout()}
-                        method="post"
-                        as="button"
-                        className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold tracking-wider text-slate-400 transition-colors hover:bg-rose-500/10 hover:text-rose-300"
-                    >
-                        <LogOut className="size-3.5" />
-                        {!isCollapsed && <span>SALIR DEL PANEL</span>}
-                    </Link>
+                    {!isCollapsed && (
+                        <div className="flex flex-col truncate leading-tight">
+                            <span className="truncate text-sm font-semibold text-white">
+                                {user?.name || 'Ricardo Valladares'}
+                            </span>
+                            <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
+                                {user?.role?.name || 'ADMINISTRADOR'}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </SidebarFooter>
         </Sidebar>
