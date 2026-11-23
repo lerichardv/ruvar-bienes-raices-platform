@@ -4,6 +4,7 @@ import {
     Building2,
     Check,
     CheckCircle2,
+    ChevronDown,
     Eye,
     FileText,
     FolderKanban,
@@ -30,6 +31,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { dashboard } from '@/routes';
@@ -247,50 +256,106 @@ export default function RolesIndex({ roles, modules }: Props) {
                     </Button>
                 </div>
 
-                {/* Role Tabs Selector */}
-                <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4 dark:border-white/10">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-2">
+                {/* Role Picker Dropdown */}
+                <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 pb-4 dark:border-white/10">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                         SELECCIONAR ROL:
                     </span>
-                    {roles.map((role) => {
-                        const isSelected = role.id === currentRole.id;
-                        return (
-                            <button
-                                key={role.id}
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
                                 type="button"
-                                onClick={() => setSelectedRoleId(role.id)}
-                                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
-                                    isSelected
-                                        ? 'bg-[#0b1a30] text-white shadow-xs dark:bg-blue-600'
-                                        : 'bg-white text-slate-700 border border-slate-200/90 hover:bg-slate-50 dark:bg-[#0d1627] dark:border-white/10 dark:text-slate-300 dark:hover:bg-slate-800'
-                                }`}
+                                variant="outline"
+                                className="inline-flex items-center gap-3 rounded-xl border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-50 hover:text-slate-900 focus:outline-hidden dark:border-white/10 dark:bg-[#0d1627] dark:text-slate-100 dark:hover:bg-slate-800 cursor-pointer min-w-[260px] justify-between"
                             >
-                                <Shield className="size-3.5" />
-                                <span>{role.name}</span>
-                                {role.is_system_admin ? (
-                                    <span
-                                        className={`rounded-full px-1.5 py-0.2 text-[9px] font-extrabold uppercase ${
+                                <div className="flex items-center gap-2.5">
+                                    <div className="flex size-6 items-center justify-center rounded-lg bg-slate-100 text-[#0b1a30] dark:bg-slate-800 dark:text-white">
+                                        <Shield className="size-3.5" />
+                                    </div>
+                                    <span className="text-xs font-extrabold text-slate-900 dark:text-white">
+                                        {currentRole.name}
+                                    </span>
+                                    {currentRole.is_system_admin ? (
+                                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] font-extrabold text-purple-700 uppercase dark:bg-purple-950/60 dark:text-purple-300">
+                                            Sistema
+                                        </span>
+                                    ) : (
+                                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                            {currentRole.users_count} {currentRole.users_count === 1 ? 'usr' : 'usrs'}
+                                        </span>
+                                    )}
+                                </div>
+                                <ChevronDown className="size-4 text-slate-400 transition-transform duration-200" />
+                            </Button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent
+                            align="start"
+                            className="w-80 rounded-2xl border-slate-200 bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#0d1627]"
+                        >
+                            <DropdownMenuLabel className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                Roles del Sistema ({roles.length})
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator className="my-1 border-slate-100 dark:border-white/5" />
+
+                            {roles.map((role) => {
+                                const isSelected = role.id === currentRole.id;
+                                return (
+                                    <DropdownMenuItem
+                                        key={role.id}
+                                        onClick={() => setSelectedRoleId(role.id)}
+                                        className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold cursor-pointer transition-colors ${
                                             isSelected
-                                                ? 'bg-purple-300 text-purple-950'
-                                                : 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
+                                                ? 'bg-slate-100 font-bold text-[#0b1a30] dark:bg-slate-800 dark:text-white'
+                                                : 'text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60'
                                         }`}
                                     >
-                                        Sistema
-                                    </span>
-                                ) : (
-                                    <span
-                                        className={`rounded-full px-1.5 py-0.2 text-[9px] font-semibold ${
-                                            isSelected
-                                                ? 'bg-white/20 text-white'
-                                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                                        }`}
-                                    >
-                                        {role.users_count} {role.users_count === 1 ? 'usr' : 'usrs'}
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
+                                        <div className="flex items-center gap-2.5">
+                                            <Shield
+                                                className={`size-4 ${
+                                                    isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'
+                                                }`}
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white">
+                                                    {role.name}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400 font-mono">
+                                                    {role.slug}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            {role.is_system_admin ? (
+                                                <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] font-extrabold text-purple-700 uppercase dark:bg-purple-950/60 dark:text-purple-300">
+                                                    Sistema
+                                                </span>
+                                            ) : (
+                                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                                                    {role.users_count} {role.users_count === 1 ? 'usr' : 'usrs'}
+                                                </span>
+                                            )}
+                                            {isSelected && <Check className="size-4 text-blue-600 dark:text-blue-400" />}
+                                        </div>
+                                    </DropdownMenuItem>
+                                );
+                            })}
+
+                            <DropdownMenuSeparator className="my-1 border-slate-100 dark:border-white/5" />
+                            <DropdownMenuItem
+                                onClick={() => {
+                                    setEditingRole(null);
+                                    setIsSheetOpen(true);
+                                }}
+                                className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30 cursor-pointer"
+                            >
+                                <Plus className="size-4 stroke-[2.5]" />
+                                <span>+ Crear nuevo rol...</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 {/* Selected Role Meta Card */}
