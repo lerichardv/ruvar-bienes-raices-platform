@@ -1,58 +1,163 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Ruvar Bienes Raíces — Plataforma de Gestión Inmobiliaria
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="public/images/logo-transparent.png" alt="Ruvar Bienes Raíces Logo" width="220" />
 </p>
 
-## About Laravel
+<p align="center">
+  <strong>Sistema integral de administración inmobiliaria de lujo desarrollado con Laravel 12, React 19, Inertia.js y Tailwind CSS v4.</strong>
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=flat&logo=laravel&logoColor=white" alt="Laravel 12" />
+  <img src="https://img.shields.io/badge/React-19.x-61DAFB?style=flat&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-v4.0-38B2AC?style=flat&logo=tailwind-css&logoColor=white" alt="Tailwind CSS v4" />
+  <img src="https://img.shields.io/badge/Inertia.js-v2.0-9553E9?style=flat&logo=inertia&logoColor=white" alt="Inertia.js v2" />
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🏛️ Acerca del Proyecto
 
-## Learning Laravel
+**Ruvar Bienes Raíces** es una plataforma administrativa diseñada bajo los más altos estándares visuales y de rendimiento para la gestión de bienes raíces premium. La arquitectura combina la robustez y seguridad del ecosistema **Laravel 12** con la reactividad y dinamismo de **Inertia.js con React 19**, estilizado con una paleta sobria y elegante en tonalidades azul marino (`#0b1a30` / `#070e1c`) y modo oscuro nativo.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## ✨ Características Principales
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 📊 1. Panel de Resumen Ejecutivo
+- Indicadores clave de rendimiento (KPIs):
+  - **Cantidad de Propiedades:** Métricas de inmuebles en venta y alquiler.
+  - **Comentarios en Propiedades:** Consultas y retroalimentación de clientes.
+  - **Artículos Publicados:** Novedades y análisis del mercado inmobiliario.
+- Encabezado depurado con selector de usuario rápido y acceso directo al perfil.
 
-## Agentic Development
+### 👥 2. Gestión Integral de Usuarios (`/usuarios`)
+- Tabla interactiva con búsqueda en tiempo real por nombre, correo o rol.
+- Filtro dropdown por rol asignado.
+- Panel lateral (*Sheet*) amplio de dos columnas para creación y edición de usuarios.
+- Validación en tiempo real con confirmación de contraseña requerida.
+- Protección de seguridad: bloqueo absoluto de auto-eliminación para la cuenta en sesión.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 🛡️ 3. Matriz de Roles y Permisos por Módulo (`/roles`)
+- **Matriz de Privilegios:** Asignación granular de permisos por módulo (`Propiedades`, `Proyectos`, `Artículos`, `Lista de Usuarios`, `Roles de Usuarios`).
+- **Conmutadores Inteligentes (*Switches*):** Control independiente para **Ver** y **Gestionar** con persistencia inmediata y auto-guardado en segundo plano.
+- **Colores Distintivos Configurables:** Cada perfil de rol cuenta con su propio color configurado mediante paleta de 10 colores de lujo o selector hexadecimal personalizado.
+- **RoleBadge Dinámico:** Los distintivos de color se reflejan en tiempo real en la tabla de usuarios, selectores y tarjetas informativas.
+
+### 🔔 4. Sistema de Notificaciones Sonner
+- Notificaciones toast centradas en la parte superior (`top-center`).
+- Botón de cierre descartable (*dismissable*) con microinteracciones y estilo de marca.
+- Tipología de notificaciones:
+  - **Éxito (Success):** Creación/edición de registros y guardado de permisos.
+  - **Información (Info):** Cierre de sesión y cambios de apariencia.
+  - **Error:** Intentos de auto-eliminación o violaciones de reglas de negocio.
+- Detección automática de mensajes de sesión (*flash messages*) de Laravel a través de Inertia.
+
+### 🌐 5. Experiencia y Localización
+- Localización completa al español en todas las vistas de administración, perfil, seguridad y apariencia.
+- Soporte para autenticación por contraseña, autenticación de dos factores (2FA) y llaves de acceso (*Passkeys*).
+- Registro público deshabilitado para garantizar un entorno puramente administrativo y privado.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+| Capa | Tecnologías |
+| :--- | :--- |
+| **Backend** | [Laravel 12](https://laravel.com), [PHP 8.3+](https://www.php.net), [Laravel Fortify](https://laravel.com/docs/fortify) |
+| **Frontend** | [React 19](https://react.dev), [TypeScript](https://www.typescriptlang.org), [Inertia.js v2](https://inertiajs.com) |
+| **Estilos** | [Tailwind CSS v4](https://tailwindcss.com), [Lucide React](https://lucide.dev) |
+| **Componentes UI** | [Radix UI](https://www.radix-ui.com), [shadcn/ui](https://ui.shadcn.com), [Sonner](https://sonner.emilkowal.ski) |
+| **Herramientas** | [Vite](https://vitejs.dev), [Wayfinder](https://github.com/laravel/wayfinder), [Laravel Pint](https://laravel.com/docs/pint), [PHPUnit](https://phpunit.de) |
+
+---
+
+## 🚀 Instalación y Puesta en Marcha
+
+### Prerrequisitos
+- PHP >= 8.3 con extensiones requeridas por Laravel (pdo_mysql, mbstring, openssl, tokenizer, xml, ctype, json, bcmath).
+- Composer 2.x
+- Node.js >= 20.x y npm
+- MySQL / MariaDB (puerto 3307 por defecto para este entorno)
+
+### Pasos de Instalación
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com/lerichardv/ruvar-bienes-raices-platform.git
+   cd ruvar-bienes-raices-platform
+   ```
+
+2. **Instalar dependencias de PHP y JavaScript:**
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. **Configurar el entorno:**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Configurar la base de datos en `.env`:**
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3307
+   DB_DATABASE=ruvar-bienes-raices
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+
+5. **Ejecutar migraciones y seeders:**
+   ```bash
+   php artisan migrate --seed
+   ```
+
+6. **Compilar recursos de frontend:**
+   ```bash
+   # Para desarrollo
+   npm run dev
+
+   # Para producción
+   npm run build
+   ```
+
+7. **Iniciar el servidor local:**
+   ```bash
+   php artisan serve
+   ```
+
+---
+
+## 🔐 Credenciales de Acceso Inicial
+
+El seeder del sistema genera automáticamente el usuario Administrador Principal:
+
+- **Correo electrónico:** `ricardo.valladares.triminio@gmail.com`
+- **Contraseña:** `12345678`
+- **Rol:** `Administrador` (Control integral de todos los módulos del sistema)
+
+---
+
+## 🧪 Pruebas y Calidad de Código
 
 ```bash
-composer require laravel/boost --dev
+# Ejecutar suite de pruebas PHPUnit
+php artisan test --compact
 
-php artisan boost:install
+# Formateo de código PHP bajo estándares Laravel Pint
+vendor/bin/pint --format agent
+
+# Verificación de compilación de frontend
+npm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## 📄 Licencia
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Este proyecto es software privado y confidencial desarrollado exclusivamente para **Ruvar Bienes Raíces**. Todos los derechos reservados.
