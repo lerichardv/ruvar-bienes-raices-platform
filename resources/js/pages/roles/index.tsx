@@ -1,22 +1,26 @@
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     AlertTriangle,
+    Building2,
     Check,
     CheckCircle2,
     Eye,
+    FileText,
     FolderKanban,
-    Home,
+    Info,
     Layers,
     Lock,
     Pencil,
     Plus,
+    Save,
+    Search,
     Shield,
     ShieldAlert,
     ShieldCheck,
     Trash2,
     Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -26,34 +30,10 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetFooter,
-    SheetHeader,
-    SheetTitle,
-} from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
 import { dashboard } from '@/routes';
-
-interface SystemModule {
-    key: string;
-    name: string;
-    description: string;
-}
-
-interface RoleItem {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-    users_count: number;
-    is_system_admin: boolean;
-    module_permissions: Record<string, 'none' | 'view' | 'manage'>;
-}
+import { RoleSheet, type RoleItem, type SystemModule } from './role-sheet';
 
 interface Props {
     roles: RoleItem[];
@@ -61,85 +41,130 @@ interface Props {
 }
 
 export default function RolesIndex({ roles, modules }: Props) {
+    // Active selected role
+    const [selectedRoleId, setSelectedRoleId] = useState<number>(roles[0]?.id || 1);
+
+    // Search query for filtering permissions/modules
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Role Sheet state (create / edit metadata)
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<RoleItem | null>(null);
 
+    // Delete dialog prompt
     const [roleToDelete, setRoleToDelete] = useState<RoleItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Initial permissions map default to 'none'
-    const defaultPermissions = modules.reduce(
-        (acc, mod) => {
-            acc[mod.key] = 'none';
-            return acc;
-        },
-        {} as Record<string, string>,
-    );
+    // Saving permissions state
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
-    const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
-        name: '',
-        slug: '',
-        description: '',
-        permissions: defaultPermissions,
-    });
+    // Find current active role
+    const currentRole = useMemo(() => {
+        return roles.find((r) => r.id === selectedRoleId) || roles[0];
+    }, [roles, selectedRoleId]);
 
-    const openCreateSheet = () => {
-        clearErrors();
-        reset();
-        setData({
-            name: '',
-            slug: '',
-            description: '',
-            permissions: { ...defaultPermissions },
+    // Local mutable state for the current role's permissions
+    const [permissionsState, setPermissionsState] = useState<
+        Record<string, 'none' | 'view' | 'manage'>
+    >({});
+
+    // Reset local permissions when currentRole changes
+    useEffect(() => {
+        if (currentRole) {
+            setPermissionsState({ ...currentRole.module_permissions });
+            setSaveSuccessMessage(null);
+        }
+    }, [currentRole]);
+
+    // Check if there are unsaved permission changes
+    const hasUnsavedChanges = useMemo(() => {
+        if (!currentRole) return false;
+        return Object.keys(currentRole.module_permissions).some(
+            (key) => (permissionsState[key] || 'none') !== (currentRole.module_permissions[key] || 'none'),
+        );
+    }, [currentRole, permissionsState]);
+
+    // Handle toggling the "Ver" switch
+    const handleToggleView = (moduleKey: string, checked: boolean) => {
+        if (currentRole.is_system_admin) return;
+
+        setPermissionsState((prev) => {
+            const currentLevel = prev[moduleKey] || 'none';
+            let nextLevel: 'none' | 'view' | 'manage';
+
+            if (checked) {
+                // If checking view, keep manage if it was already manage, else view
+                nextLevel = currentLevel === 'manage' ? 'manage' : 'view';
+            } else {
+                // If unchecking view, manage must also be disabled
+                nextLevel = 'none';
+            }
+
+            return { ...prev, [moduleKey]: nextLevel };
         });
-        setEditingRole(null);
-        setIsSheetOpen(true);
     };
 
-    const openEditSheet = (role: RoleItem) => {
-        clearErrors();
-        setData({
-            name: role.name,
-            slug: role.slug,
-            description: role.description || '',
-            permissions: { ...role.module_permissions },
+    // Handle toggling the "Gestionar" switch
+    const handleToggleManage = (moduleKey: string, checked: boolean) => {
+        if (currentRole.is_system_admin) return;
+
+        setPermissionsState((prev) => {
+            let nextLevel: 'none' | 'view' | 'manage';
+
+            if (checked) {
+                // Manage automatically implies View
+                nextLevel = 'manage';
+            } else {
+                // Unchecking manage downgrades to View
+                nextLevel = 'view';
+            }
+
+            return { ...prev, [moduleKey]: nextLevel };
         });
-        setEditingRole(role);
-        setIsSheetOpen(true);
     };
 
-    const handlePermissionChange = (moduleKey: string, level: 'none' | 'view' | 'manage') => {
-        setData('permissions', {
-            ...data.permissions,
-            [moduleKey]: level,
-        });
-    };
+    // Save modified permissions to backend
+    const handleSavePermissions = () => {
+        if (!currentRole || currentRole.is_system_admin) return;
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (editingRole) {
-            put(`/roles/${editingRole.id}`, {
+        setIsSaving(true);
+        router.put(
+            `/roles/${currentRole.id}`,
+            {
+                name: currentRole.name,
+                slug: currentRole.slug,
+                description: currentRole.description,
+                permissions: permissionsState,
+            },
+            {
+                preserveScroll: true,
                 onSuccess: () => {
-                    setIsSheetOpen(false);
-                    reset();
+                    setIsSaving(false);
+                    setSaveSuccessMessage('¡Permisos actualizados y guardados exitosamente!');
+                    setTimeout(() => setSaveSuccessMessage(null), 4000);
                 },
-            });
-        } else {
-            post('/roles', {
-                onSuccess: () => {
-                    setIsSheetOpen(false);
-                    reset();
+                onError: () => {
+                    setIsSaving(false);
                 },
-            });
+            },
+        );
+    };
+
+    // Discard unsaved changes
+    const handleDiscardChanges = () => {
+        if (currentRole) {
+            setPermissionsState({ ...currentRole.module_permissions });
+            setSaveSuccessMessage(null);
         }
     };
 
+    // Confirm deletion of a role
     const confirmDelete = () => {
         if (!roleToDelete) return;
 
         if (roleToDelete.is_system_admin) {
-            alert('El rol de Administrador principal no puede ser eliminado.');
+            alert('El rol del sistema no se puede eliminar.');
             setRoleToDelete(null);
             return;
         }
@@ -155,8 +180,42 @@ export default function RolesIndex({ roles, modules }: Props) {
             onFinish: () => {
                 setIsDeleting(false);
                 setRoleToDelete(null);
+                // Switch to another role if deleted role was selected
+                if (selectedRoleId === roleToDelete.id && roles[0]) {
+                    setSelectedRoleId(roles[0].id);
+                }
             },
         });
+    };
+
+    // Filter modules by search query
+    const filteredModules = useMemo(() => {
+        if (!searchQuery.trim()) return modules;
+        const q = searchQuery.toLowerCase();
+        return modules.filter(
+            (m) =>
+                m.name.toLowerCase().includes(q) ||
+                m.description.toLowerCase().includes(q) ||
+                m.key.toLowerCase().includes(q),
+        );
+    }, [modules, searchQuery]);
+
+    // Map module keys to representative Lucide icons
+    const getModuleIcon = (key: string) => {
+        switch (key) {
+            case 'propiedades':
+                return <Building2 className="size-4 text-blue-600 dark:text-blue-400" />;
+            case 'proyectos':
+                return <FolderKanban className="size-4 text-indigo-600 dark:text-indigo-400" />;
+            case 'articulos':
+                return <FileText className="size-4 text-amber-600 dark:text-amber-400" />;
+            case 'usuarios':
+                return <Users className="size-4 text-emerald-600 dark:text-emerald-400" />;
+            case 'roles':
+                return <ShieldCheck className="size-4 text-purple-600 dark:text-purple-400" />;
+            default:
+                return <Layers className="size-4 text-slate-500" />;
+        }
     };
 
     return (
@@ -171,307 +230,328 @@ export default function RolesIndex({ roles, modules }: Props) {
                             ROLES Y PERMISOS DEL SISTEMA
                         </h1>
                         <p className="mt-1 text-xs font-semibold tracking-wider text-slate-500 uppercase">
-                            CONFIGURA LOS PRIVILEGIOS POR MÓDULO (VER O VER Y GESTIONAR) PARA CADA PERFIL
+                            MATRIZ DE PRIVILEGIOS POR MÓDULO CON CONTROL DE VER Y GESTIONAR
                         </p>
                     </div>
 
                     <Button
                         type="button"
-                        onClick={openCreateSheet}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0b1a30] px-5 py-2.5 text-xs font-bold tracking-wide text-white shadow-xs transition-all hover:bg-[#15233c] hover:shadow"
+                        onClick={() => {
+                            setEditingRole(null);
+                            setIsSheetOpen(true);
+                        }}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0b1a30] px-5 py-2.5 text-xs font-bold tracking-wide text-white shadow-xs transition-all hover:bg-[#15233c] hover:shadow cursor-pointer"
                     >
                         <Plus className="size-4 stroke-[2.5]" />
                         <span>+ Nuevo Rol</span>
                     </Button>
                 </div>
 
-                {/* Roles Cards Grid */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    {roles.map((role) => (
-                        <div
-                            key={role.id}
-                            className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-white/10 dark:bg-[#0d1627]"
-                        >
-                            <div className="space-y-4">
-                                {/* Role Header */}
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex size-11 items-center justify-center rounded-xl bg-slate-100 text-[#0b1a30] dark:bg-slate-800 dark:text-white">
-                                            <ShieldCheck className="size-6" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                                                    {role.name}
-                                                </h2>
-                                                {role.is_system_admin && (
-                                                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
-                                                        Sistema
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="text-xs font-mono text-slate-400">
-                                                slug: {role.slug}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex items-center gap-1 text-slate-400">
-                                        <button
-                                            type="button"
-                                            onClick={() => openEditSheet(role)}
-                                            className="rounded-lg p-1.5 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                            title="Editar rol y permisos"
-                                        >
-                                            <Pencil className="size-4" />
-                                        </button>
-
-                                        {role.is_system_admin || role.users_count > 0 ? (
-                                            <button
-                                                type="button"
-                                                disabled
-                                                className="cursor-not-allowed rounded-lg p-1.5 text-slate-300 opacity-40 dark:text-slate-600"
-                                                title={
-                                                    role.is_system_admin
-                                                        ? 'El rol del sistema no se puede eliminar'
-                                                        : 'Tiene usuarios asignados'
-                                                }
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                onClick={() => setRoleToDelete(role)}
-                                                className="rounded-lg p-1.5 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
-                                                title="Eliminar rol"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Description */}
-                                <p className="text-xs text-slate-600 leading-relaxed dark:text-slate-300">
-                                    {role.description || 'Sin descripción asignada.'}
-                                </p>
-
-                                {/* Module Permissions Breakdown */}
-                                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/5">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                        Permisos por Módulo:
+                {/* Role Tabs Selector */}
+                <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4 dark:border-white/10">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-2">
+                        SELECCIONAR ROL:
+                    </span>
+                    {roles.map((role) => {
+                        const isSelected = role.id === currentRole.id;
+                        return (
+                            <button
+                                key={role.id}
+                                type="button"
+                                onClick={() => setSelectedRoleId(role.id)}
+                                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+                                    isSelected
+                                        ? 'bg-[#0b1a30] text-white shadow-xs dark:bg-blue-600'
+                                        : 'bg-white text-slate-700 border border-slate-200/90 hover:bg-slate-50 dark:bg-[#0d1627] dark:border-white/10 dark:text-slate-300 dark:hover:bg-slate-800'
+                                }`}
+                            >
+                                <Shield className="size-3.5" />
+                                <span>{role.name}</span>
+                                {role.is_system_admin ? (
+                                    <span
+                                        className={`rounded-full px-1.5 py-0.2 text-[9px] font-extrabold uppercase ${
+                                            isSelected
+                                                ? 'bg-purple-300 text-purple-950'
+                                                : 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
+                                        }`}
+                                    >
+                                        Sistema
                                     </span>
+                                ) : (
+                                    <span
+                                        className={`rounded-full px-1.5 py-0.2 text-[9px] font-semibold ${
+                                            isSelected
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        {role.users_count} {role.users_count === 1 ? 'usr' : 'usrs'}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
 
-                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                        {modules.map((mod) => {
-                                            const level = role.module_permissions[mod.key] || 'none';
-
-                                            return (
-                                                <div
-                                                    key={mod.key}
-                                                    className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-xs dark:bg-slate-800/50"
-                                                >
-                                                    <span className="font-medium text-slate-700 dark:text-slate-200">
-                                                        {mod.name}
-                                                    </span>
-
-                                                    {level === 'manage' ? (
-                                                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
-                                                            <Check className="size-3" />
-                                                            <span>Ver y Gestionar</span>
-                                                        </span>
-                                                    ) : level === 'view' ? (
-                                                        <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-950/80 dark:text-blue-300">
-                                                            <Eye className="size-3" />
-                                                            <span>Ver</span>
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center gap-1 rounded-md bg-slate-200/70 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400">
-                                                            <span>Sin Acceso</span>
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                {/* Selected Role Meta Card */}
+                {currentRole && (
+                    <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-[#0d1627]">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-3">
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                                        {currentRole.name}
+                                    </h2>
+                                    <span className="font-mono text-xs text-slate-400">
+                                        slug: {currentRole.slug}
+                                    </span>
+                                    {currentRole.is_system_admin && (
+                                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">
+                                            Administrador Principal
+                                        </span>
+                                    )}
                                 </div>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {currentRole.description || 'Sin descripción asignada para este rol.'}
+                                </p>
                             </div>
 
-                            {/* Card Footer: Users Count */}
-                            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 dark:border-white/5 dark:text-slate-400">
-                                <div className="flex items-center gap-1.5">
-                                    <Users className="size-3.5 text-slate-400" />
-                                    <span>
-                                        <strong>{role.users_count}</strong> {role.users_count === 1 ? 'usuario asignado' : 'usuarios asignados'}
-                                    </span>
-                                </div>
-
-                                <button
+                            <div className="flex items-center gap-2">
+                                <Button
                                     type="button"
-                                    onClick={() => openEditSheet(role)}
-                                    className="font-semibold text-[#0b1a30] hover:underline dark:text-slate-200"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setEditingRole(currentRole);
+                                        setIsSheetOpen(true);
+                                    }}
+                                    className="rounded-xl border-slate-200 text-xs py-2 px-3 gap-1.5 cursor-pointer dark:border-slate-700"
                                 >
-                                    Modificar permisos →
-                                </button>
+                                    <Pencil className="size-3.5" />
+                                    <span>Editar Datos</span>
+                                </Button>
+
+                                {!currentRole.is_system_admin && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={currentRole.users_count > 0}
+                                        onClick={() => setRoleToDelete(currentRole)}
+                                        title={
+                                            currentRole.users_count > 0
+                                                ? 'Reasigne los usuarios antes de eliminar este rol'
+                                                : 'Eliminar este rol'
+                                        }
+                                        className="rounded-xl border-slate-200 text-xs py-2 px-3 gap-1.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed dark:border-slate-700 dark:hover:bg-rose-950/30"
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                        <span>Eliminar</span>
+                                    </Button>
+                                )}
                             </div>
                         </div>
-                    ))}
+
+                        {/* Banner for System Admin */}
+                        {currentRole.is_system_admin && (
+                            <div className="mt-4 flex items-center gap-2 rounded-xl bg-purple-50 p-3 text-xs text-purple-900 dark:bg-purple-950/30 dark:text-purple-200">
+                                <Lock className="size-4 shrink-0 text-purple-700 dark:text-purple-400" />
+                                <span>
+                                    <strong>Rol de Seguridad del Sistema:</strong> Este rol posee control total y permanente en todos los módulos. Los switches permanecen activados para proteger la integridad del sistema.
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Filter and Save Action Bar */}
+                <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between dark:border-white/10 dark:bg-[#0d1627]">
+                    {/* Search Filter */}
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Buscar permiso o módulo por nombre o descripción..."
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-10 pr-4 text-xs text-slate-800 placeholder-slate-400 transition-colors focus:border-slate-400 focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200"
+                        />
+                    </div>
+
+                    {/* Actions and Status */}
+                    <div className="flex items-center gap-3">
+                        {saveSuccessMessage && (
+                            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                <CheckCircle2 className="size-4" />
+                                <span>{saveSuccessMessage}</span>
+                            </span>
+                        )}
+
+                        {hasUnsavedChanges && !currentRole.is_system_admin && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                                    ● Cambios sin guardar
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleDiscardChanges}
+                                    className="rounded-xl text-xs py-1.5 px-3 border-slate-200 dark:border-slate-700"
+                                >
+                                    Descartar
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={handleSavePermissions}
+                                    disabled={isSaving}
+                                    className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-4 shadow-xs"
+                                >
+                                    {isSaving && <Spinner className="mr-1.5" />}
+                                    Guardar Cambios
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Table with switches grouped per module */}
+                <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-white/10 dark:bg-[#0d1627]">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-200/80 bg-slate-50/70 text-[11px] font-bold tracking-wider text-slate-500 uppercase dark:border-white/10 dark:bg-slate-900/40">
+                                    <th className="py-4 pl-6 pr-4">MÓDULO / PERMISO</th>
+                                    <th className="px-4 py-4">DESCRIPCIÓN DE PRIVILEGIOS</th>
+                                    <th className="px-4 py-4 text-center">VER</th>
+                                    <th className="px-4 py-4 text-center">GESTIONAR</th>
+                                    <th className="py-4 pl-4 pr-6 text-right">ESTADO ACTUAL</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 text-sm dark:divide-white/5">
+                                {filteredModules.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="py-12 text-center text-slate-400">
+                                            No se encontraron módulos ni permisos coincidentes con la búsqueda.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredModules.map((mod) => {
+                                        const currentLevel = permissionsState[mod.key] || 'none';
+                                        const isViewActive = currentLevel === 'view' || currentLevel === 'manage';
+                                        const isManageActive = currentLevel === 'manage';
+                                        const isLocked = currentRole.is_system_admin;
+
+                                        return (
+                                            <React.Fragment key={mod.key}>
+                                                {/* Group Header Row for the Module */}
+                                                <tr className="bg-slate-50/40 border-t border-b border-slate-200/60 dark:bg-slate-900/20 dark:border-white/5">
+                                                    <td colSpan={5} className="py-2.5 pl-6 pr-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex size-6 items-center justify-center rounded-lg bg-white shadow-xs dark:bg-slate-800">
+                                                                {getModuleIcon(mod.key)}
+                                                            </div>
+                                                            <span className="text-xs font-extrabold tracking-wide text-[#0b1a30] uppercase dark:text-white">
+                                                                MÓDULO: {mod.name}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                                {/* Permission Row under the Module */}
+                                                <tr className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                                                    {/* Módulo / Permiso */}
+                                                    <td className="py-4 pl-8 pr-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-slate-900 dark:text-white">
+                                                                Acceso a {mod.name}
+                                                            </span>
+                                                            <span className="text-[11px] font-mono text-slate-400">
+                                                                modulo:{mod.key}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Descripción */}
+                                                    <td className="px-4 py-4 text-xs text-slate-600 dark:text-slate-300 max-w-md">
+                                                        {mod.description}
+                                                    </td>
+
+                                                    {/* Switch VER */}
+                                                    <td className="px-4 py-4 text-center">
+                                                        <div className="flex flex-col items-center justify-center gap-1">
+                                                            <Switch
+                                                                checked={isViewActive}
+                                                                disabled={isLocked}
+                                                                onCheckedChange={(checked) =>
+                                                                    handleToggleView(mod.key, checked)
+                                                                }
+                                                                title={
+                                                                    isLocked
+                                                                        ? 'Protegido por el sistema'
+                                                                        : 'Permiso de visualización'
+                                                                }
+                                                            />
+                                                            <span className="text-[10px] font-semibold text-slate-400">
+                                                                {isViewActive ? 'Activado' : 'Inactivo'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Switch GESTIONAR */}
+                                                    <td className="px-4 py-4 text-center">
+                                                        <div className="flex flex-col items-center justify-center gap-1">
+                                                            <Switch
+                                                                checked={isManageActive}
+                                                                disabled={isLocked}
+                                                                onCheckedChange={(checked) =>
+                                                                    handleToggleManage(mod.key, checked)
+                                                                }
+                                                                title={
+                                                                    isLocked
+                                                                        ? 'Protegido por el sistema'
+                                                                        : 'Permiso de gestión y edición'
+                                                                }
+                                                            />
+                                                            <span className="text-[10px] font-semibold text-slate-400">
+                                                                {isManageActive ? 'Activado' : 'Inactivo'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Estado Actual Badge */}
+                                                    <td className="py-4 pl-4 pr-6 text-right">
+                                                        {isManageActive ? (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                                                <Check className="size-3.5 stroke-[2.5]" />
+                                                                <span>Ver y Gestionar</span>
+                                                            </span>
+                                                        ) : isViewActive ? (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                                                                <Eye className="size-3.5" />
+                                                                <span>Solo Ver</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                                                <span>Sin Acceso</span>
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            </React.Fragment>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            {/* shadcn Sheet para Crear / Configurar Rol y Permisos */}
-            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetContent side="right" className="w-full sm:max-w-lg p-6 bg-white dark:bg-[#0d1627] flex flex-col justify-between overflow-y-auto">
-                    <div>
-                        <SheetHeader className="text-left pb-4 border-b border-slate-100 dark:border-white/10">
-                            <SheetTitle className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                                {editingRole ? `Configurar: ${editingRole.name}` : 'Crear Nuevo Rol'}
-                            </SheetTitle>
-                            <SheetDescription className="text-xs text-slate-500 dark:text-slate-400">
-                                Define el nombre del rol y establece el nivel de privilegios (Sin acceso, Ver, o Ver y Gestionar) para cada módulo.
-                            </SheetDescription>
-                        </SheetHeader>
-
-                        <form id="role-form" onSubmit={handleSubmit} className="space-y-5 pt-6">
-                            {/* Nombre del Rol */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="role-name" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                    Nombre del Rol *
-                                </Label>
-                                <Input
-                                    id="role-name"
-                                    type="text"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    placeholder="Ej. Coordinador de Operaciones"
-                                    required
-                                    className="rounded-xl border-slate-200 text-xs py-2 dark:border-slate-700"
-                                />
-                                {errors.name && (
-                                    <p className="text-[11px] text-rose-600">{errors.name}</p>
-                                )}
-                            </div>
-
-                            {/* Descripción */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="role-desc" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                    Descripción del Perfil
-                                </Label>
-                                <textarea
-                                    id="role-desc"
-                                    rows={2}
-                                    value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    placeholder="Alcance de las funciones y responsabilidades del rol..."
-                                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                />
-                                {errors.description && (
-                                    <p className="text-[11px] text-rose-600">{errors.description}</p>
-                                )}
-                            </div>
-
-                            {/* Matriz de Permisos por Módulo */}
-                            <div className="space-y-3 pt-2">
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                                        Permisos por Módulo
-                                    </Label>
-                                    <span className="text-[10px] text-slate-500">
-                                        Selecciona el alcance por sección
-                                    </span>
-                                </div>
-
-                                <div className="space-y-3">
-                                    {modules.map((mod) => {
-                                        const currentLevel = data.permissions[mod.key] || 'none';
-
-                                        return (
-                                            <div
-                                                key={mod.key}
-                                                className="rounded-xl border border-slate-200/90 bg-slate-50/70 p-3.5 space-y-2 dark:border-white/10 dark:bg-slate-800/40"
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-bold text-xs text-slate-900 dark:text-white">
-                                                        {mod.name}
-                                                    </span>
-                                                    <span className="text-[10px] font-mono text-slate-400">
-                                                        {mod.key}
-                                                    </span>
-                                                </div>
-
-                                                <p className="text-[11px] text-slate-500 leading-tight dark:text-slate-400">
-                                                    {mod.description}
-                                                </p>
-
-                                                {/* Selector 3 niveles: Sin Acceso | Ver | Ver y Gestionar */}
-                                                <div className="grid grid-cols-3 gap-1.5 pt-1">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handlePermissionChange(mod.key, 'none')}
-                                                        className={`rounded-lg py-1.5 text-center text-xs font-semibold transition-all ${
-                                                            currentLevel === 'none'
-                                                                ? 'bg-slate-300 text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white'
-                                                                : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
-                                                        }`}
-                                                    >
-                                                        Sin Acceso
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handlePermissionChange(mod.key, 'view')}
-                                                        className={`rounded-lg py-1.5 text-center text-xs font-semibold transition-all ${
-                                                            currentLevel === 'view'
-                                                                ? 'bg-blue-600 text-white shadow-xs'
-                                                                : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
-                                                        }`}
-                                                    >
-                                                        Ver
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handlePermissionChange(mod.key, 'manage')}
-                                                        className={`rounded-lg py-1.5 text-center text-xs font-semibold transition-all ${
-                                                            currentLevel === 'manage'
-                                                                ? 'bg-emerald-600 text-white shadow-xs'
-                                                                : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
-                                                        }`}
-                                                    >
-                                                        Ver y Gestionar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <SheetFooter className="border-t border-slate-100 pt-4 dark:border-white/10 flex flex-row gap-2 justify-end mt-6">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsSheetOpen(false)}
-                            className="rounded-xl text-xs py-2 border-slate-200"
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="submit"
-                            form="role-form"
-                            disabled={processing}
-                            className="rounded-xl bg-[#0b1a30] text-xs font-bold text-white hover:bg-[#15233c] py-2 px-5"
-                        >
-                            {processing && <Spinner className="mr-2" />}
-                            {editingRole ? 'Actualizar Rol' : 'Guardar Rol'}
-                        </Button>
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
+            {/* Modal Sheet for Role General Metadata */}
+            <RoleSheet
+                isOpen={isSheetOpen}
+                onOpenChange={setIsSheetOpen}
+                role={editingRole}
+                modules={modules}
+            />
 
             {/* Prompt de Confirmación para Eliminar Rol */}
             <Dialog open={!!roleToDelete} onOpenChange={(open) => !open && setRoleToDelete(null)}>
@@ -484,9 +564,9 @@ export default function RolesIndex({ roles, modules }: Props) {
                             ¿Eliminar rol del sistema?
                         </DialogTitle>
                         <DialogDescription className="text-xs text-slate-500 leading-relaxed dark:text-slate-400">
-                            Estás a punto de eliminar el rol{' '}
-                            <strong className="text-slate-800 dark:text-slate-200">{roleToDelete?.name}</strong>. Esta
-                            acción revocará las asignaciones de permisos de este perfil y no se puede deshacer.
+                            Estás a punto de eliminar el perfil{' '}
+                            <strong className="text-slate-800 dark:text-slate-200">{roleToDelete?.name}</strong>.
+                            Esta acción es permanente y no se puede deshacer.
                         </DialogDescription>
                     </DialogHeader>
 
